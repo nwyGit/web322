@@ -8,6 +8,7 @@
  *********************************************************************************/
 
 var express = require("express");
+var blog_service = require("./blog-service.js");
 var app = express();
 var HTTP_PORT = process.env.PORT || 8080;
 
@@ -25,4 +26,44 @@ app.get("/about", (req, res) => {
 	res.sendFile(__dirname + "/views/about.html");
 });
 
-app.listen(HTTP_PORT, onHttpStart);
+app.get("/blog", (req, res) => {
+	var error = { message: "" };
+	blog_service
+		.getPublishedPosts()
+		.then((data) => res.send(data))
+		.catch((err) => {
+			error.message = err;
+			res.send(error);
+		});
+});
+
+app.get("/posts", (req, res) => {
+	var error = { message: "" };
+	blog_service
+		.getAllPosts()
+		.then((data) => res.send(data))
+		.catch((err) => {
+			error.message = err;
+			res.send(error);
+		});
+});
+
+app.get("/categories", (req, res) => {
+	var error = { message: "" };
+	blog_service
+		.getCategories()
+		.then((data) => res.send(data))
+		.catch((err) => {
+			error.message = err;
+			res.send(error);
+		});
+});
+
+app.use((req, res) => {
+	res.status(404).send("Page Not Found");
+});
+
+blog_service
+	.initialize()
+	.then(() => app.listen(HTTP_PORT, onHttpStart))
+	.catch((err) => console.log(err));
