@@ -7,10 +7,14 @@ module.exports.initialize = function () {
 	return new Promise((resolve, reject) => {
 		fs.readFile(__dirname + "/data/posts.json", "utf8", (err, data) => {
 			if (err) reject("unable to read file");
-			posts = JSON.parse(data);
+			if (data.length > 0) {
+				posts = JSON.parse(data);
+			}
 			fs.readFile(__dirname + "/data/categories.json", "utf8", (err, data) => {
 				if (err) reject("unable to read file");
-				categories = JSON.parse(data);
+				if (data.length > 0) {
+					categories = JSON.parse(data);
+				}
 			});
 		});
 		resolve();

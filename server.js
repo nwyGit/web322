@@ -4,11 +4,11 @@
  * No part  of this assignment has been copied manually or electronically from any other source
  * (including 3rd party web sites) or distributed to other students.
  * Name: Wai Yan Ng Student ID: 149637217 Date: 26 Sep 2022
- * Online (Cyclic) Link: ________________________________________________________
+ * Online (Cyclic) Link: red-prickly-prawn.cyclic.app
  *********************************************************************************/
 
 var express = require("express");
-var blog_service = require("./blog-service.js");
+var blog_service = require("./blog-service");
 var app = express();
 var HTTP_PORT = process.env.PORT || 8080;
 
@@ -33,7 +33,7 @@ app.get("/blog", (req, res) => {
 		.then((data) => res.send(data))
 		.catch((err) => {
 			error.message = err;
-			res.send(error);
+			res.json(error);
 		});
 });
 
@@ -44,7 +44,7 @@ app.get("/posts", (req, res) => {
 		.then((data) => res.send(data))
 		.catch((err) => {
 			error.message = err;
-			res.send(error);
+			res.json(error);
 		});
 });
 
@@ -55,7 +55,7 @@ app.get("/categories", (req, res) => {
 		.then((data) => res.send(data))
 		.catch((err) => {
 			error.message = err;
-			res.send(error);
+			res.json(error);
 		});
 });
 
