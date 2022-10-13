@@ -11,6 +11,7 @@ var express = require("express");
 var blog_service = require("./blog-service");
 var app = express();
 var HTTP_PORT = process.env.PORT || 8080;
+var path = require("path");
 
 function onHttpStart() {
 	console.log("Express http server listening on: " + HTTP_PORT);
@@ -57,6 +58,10 @@ app.get("/categories", (req, res) => {
 			error.message = err;
 			res.json(error);
 		});
+});
+
+app.get("/posts/add", (req, res) => {
+	res.sendFile(path.join(__dirname, "/views/addPost.html"));
 });
 
 app.use((req, res) => {
