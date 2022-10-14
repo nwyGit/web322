@@ -22,34 +22,16 @@ module.exports.initialize = function () {
 };
 
 module.exports.getAllPosts = function () {
-	return new Promise((resolve, reject) => {
-		if (posts.length > 0) {
-			resolve(posts);
-		} else {
-			reject("no results returned");
-		}
-	});
+	return returnPromise(posts, "no result returned");
 };
 
 module.exports.getPublishedPosts = function () {
 	var result = posts.filter((obj) => obj.published === true);
-	return new Promise((resolve, reject) => {
-		if (result.length > 0) {
-			resolve(result);
-		} else {
-			reject("no result returned");
-		}
-	});
+	return returnPromise(result, "no result returned");
 };
 
 module.exports.getCategories = function () {
-	return new Promise((resolve, reject) => {
-		if (categories.length > 0) {
-			resolve(categories);
-		} else {
-			reject("no result returned");
-		}
-	});
+	return returnPromise(categories, "no result returned");
 };
 
 module.exports.addPost = (postData) => {
@@ -68,3 +50,36 @@ module.exports.addPost = (postData) => {
 		}
 	});
 };
+
+module.exports.getPostsByCategory = (category) => {
+	var result = posts.filter((obj) => obj.category === category);
+	return returnPromise(result, "no result returned");
+};
+
+module.exports.getPostsByMinDate = (minDateStr) => {
+	const date = minDateStr.split("-");
+	var result = posts.filter((obj) => {
+		const objDate = obj.postDate.split("-");
+		return objDate[0] >= date[0] &&
+			objDate[1] >= date[1] &&
+			objDate[2] >= date[2]
+			? true
+			: false;
+	});
+	return returnPromise(result, "no result returned");
+};
+
+module.exports.getPostById = (id) => {
+	var result = posts.filter((obj) => obj.id === id);
+	return returnPromise(result, "no result returned");
+};
+
+function returnPromise(result, msg) {
+	return new Promise((resolve, reject) => {
+		if (result.length > 0) {
+			resolve(result);
+		} else {
+			reject(msg);
+		}
+	});
+}

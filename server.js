@@ -1,5 +1,5 @@
 /**********************************************************************************
- * WEB322 – Assignment 02*
+ * WEB322 – Assignment 03*
  * I declare that this assignment is my own work in accordance with Seneca  Academic Policy.
  * No part  of this assignment has been copied manually or electronically from any other source
  * (including 3rd party web sites) or distributed to other students.
@@ -52,13 +52,35 @@ app.get("/blog", (req, res) => {
 
 app.get("/posts", (req, res) => {
 	var error = { message: "" };
-	blog_service
-		.getAllPosts()
-		.then((data) => res.send(data))
-		.catch((err) => {
-			error.message = err;
-			res.json(error);
-		});
+	var category = Number(req.query.category);
+	var minDate = req.query.minDate;
+	if (!category && !minDate) {
+		blog_service
+			.getAllPosts()
+			.then((data) => res.send(data))
+			.catch((err) => {
+				error.message = err;
+				res.json(error);
+			});
+	} else if (Number.isInteger(category)) {
+		blog_service
+			.getPostsByCategory(category)
+			.then((data) => {
+				res.json(data);
+			})
+			.catch((err) => {
+				error.message = err;
+				res.json(error);
+			});
+	} else if (minDate) {
+		blog_service
+			.getPostsByMinDate(minDate)
+			.then((data) => res.json(data))
+			.catch((err) => {
+				error.message = err;
+				res.json(error);
+			});
+	}
 });
 
 app.get("/categories", (req, res) => {
@@ -111,6 +133,18 @@ app.post("/posts/add", upload.single("featureImage"), (req, res) => {
 			res.redirect("/posts");
 		})
 		.catch((msg) => res.send(msg));
+});
+
+app.get("/posts/:id", (req, res) => {
+	var error = { message: "" };
+	var id = Number(req.params.id);
+	blog_service
+		.getPostById(id)
+		.then((data) => res.json(data))
+		.catch((err) => {
+			error.message = err;
+			res.json(error);
+		});
 });
 
 app.use((req, res) => {
