@@ -30,6 +30,7 @@ module.exports.getAllPosts = function () {
 		}
 	});
 };
+
 module.exports.getPublishedPosts = function () {
 	var result = posts.filter((obj) => obj.published === true);
 	return new Promise((resolve, reject) => {
@@ -40,12 +41,30 @@ module.exports.getPublishedPosts = function () {
 		}
 	});
 };
+
 module.exports.getCategories = function () {
 	return new Promise((resolve, reject) => {
 		if (categories.length > 0) {
 			resolve(categories);
 		} else {
 			reject("no result returned");
+		}
+	});
+};
+
+module.exports.addPost = (postData) => {
+	return new Promise((resolve, reject) => {
+		if (postData.published === undefined) {
+			postData.published = false;
+		} else {
+			postData.published = true;
+		}
+		postData.id = posts.length + 1;
+		posts.push(postData);
+		if (postData) {
+			resolve(postData);
+		} else {
+			reject("the object is not valid");
 		}
 	});
 };

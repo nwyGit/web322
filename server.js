@@ -12,6 +12,18 @@ var blog_service = require("./blog-service");
 var app = express();
 var HTTP_PORT = process.env.PORT || 8080;
 var path = require("path");
+const multer = require("multer");
+const cloudinary = require("cloudinary").v2;
+const streamifier = require("streamifier");
+const upload = multer(); // no {storage:storage} since we are not using disk storage
+
+//cloudinary config
+cloudinary.config({
+	cloud_name: "dyao5bri8",
+	api_key: "894474498621689",
+	api_secret: "gHlkiAz8phpffKrDOFRHktQBzNc",
+	secure: true,
+});
 
 function onHttpStart() {
 	console.log("Express http server listening on: " + HTTP_PORT);
@@ -62,6 +74,43 @@ app.get("/categories", (req, res) => {
 
 app.get("/posts/add", (req, res) => {
 	res.sendFile(path.join(__dirname, "/views/addPost.html"));
+});
+
+app.post("/posts/add", upload.single("featureImage"), (req, res) => {
+	if (req.file) {
+		let streamUpload = (req) => {
+			return new Promise((resolve, reject) => {
+				let stream = cloudinary.uploader.upload_stream((error, result) => {
+					if (result) {
+						resolve(result);
+					} else {
+						reject(error);
+					}
+				});
+
+				streamifier.createReadStream(req.file.buffer).pipe(stream);
+			});
+		};
+
+		async function upload(req) {
+			let result = await streamUpload(req);
+			console.log(result);
+			return result;
+		}
+
+		upload(req).then((uploaded) => {
+			req.body.featureImage = uploaded.url;
+		});
+	} else {
+		req.body.featureImage = "";
+	}
+
+	blog_service
+		.addPost(req.body)
+		.then(() => {
+			res.redirect("/posts");
+		})
+		.catch((msg) => res.send(msg));
 });
 
 app.use((req, res) => {
