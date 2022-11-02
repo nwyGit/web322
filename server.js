@@ -130,10 +130,10 @@ app.get("/categories", (req, res) => {
 	var error = { message: "" };
 	blog_service
 		.getCategories()
-		.then((data) => res.send(data))
+		.then((data) => res.render("categories", { data: data }))
 		.catch((err) => {
 			error.message = err;
-			res.json(error);
+			res.render("categories", error);
 		});
 });
 
