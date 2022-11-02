@@ -16,6 +16,37 @@ const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
 const streamifier = require("streamifier");
 const upload = multer(); // no {storage:storage} since we are not using disk storage
+const exphbs = require("express-handlebars");
+//handling .hbs extension file
+app.engine(
+	".hbs",
+	exphbs.engine({
+		extname: ".hbs",
+		helpers: {
+			navLink: function (url, options) {
+				return (
+					"<li" +
+					(url == app.locals.activeRoute ? ' class="active" ' : "") +
+					'><a href="' +
+					url +
+					'">' +
+					options.fn(this) +
+					"</a></li>"
+				);
+			},
+			equal: function (lvalue, rvalue, options) {
+				if (arguments.length < 3)
+					throw new Error("Handlebars Helper equal needs 2 parameters");
+				if (lvalue != rvalue) {
+					return options.inverse(this);
+				} else {
+					return options.fn(this);
+				}
+			},
+		},
+	})
+);
+app.set("view engine", ".hbs");
 
 //cloudinary config
 cloudinary.config({
@@ -24,19 +55,31 @@ cloudinary.config({
 	api_secret: "gHlkiAz8phpffKrDOFRHktQBzNc",
 	secure: true,
 });
-
+//port
 function onHttpStart() {
 	console.log("Express http server listening on: " + HTTP_PORT);
 }
-
+//middleware
 app.use(express.static("public"));
 
+app.use(function (req, res, next) {
+	let route = req.path.substring(1);
+	app.locals.activeRoute =
+		"/" +
+		(isNaN(route.split("/")[1])
+			? route.replace(/\/(?!.*)/, "")
+			: route.replace(/\/(.*)/, ""));
+	app.locals.viewingCategory = req.query.category;
+	next();
+});
+
+// routes
 app.get("/", (req, res) => {
 	res.redirect("/about");
 });
 
 app.get("/about", (req, res) => {
-	res.sendFile(__dirname + "/views/about.html");
+	res.render("about");
 });
 
 app.get("/blog", (req, res) => {
@@ -95,7 +138,7 @@ app.get("/categories", (req, res) => {
 });
 
 app.get("/posts/add", (req, res) => {
-	res.sendFile(path.join(__dirname, "/views/addPost.html"));
+	res.render("addPost");
 });
 
 app.post("/posts/add", upload.single("featureImage"), (req, res) => {
@@ -146,11 +189,11 @@ app.get("/posts/:id", (req, res) => {
 			res.json(error);
 		});
 });
-
+//exception routes
 app.use((req, res) => {
 	res.status(404).send("Page Not Found");
 });
-
+//blog logic
 blog_service
 	.initialize()
 	.then(() => app.listen(HTTP_PORT, onHttpStart))
