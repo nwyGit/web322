@@ -22,16 +22,16 @@ module.exports.initialize = function () {
 };
 
 module.exports.getAllPosts = function () {
-	return returnPromise(posts, "no result returned");
+	return returnPromise(posts, "No results returned");
 };
 
 module.exports.getPublishedPosts = function () {
 	var result = posts.filter((obj) => obj.published === true);
-	return returnPromise(result, "no result returned");
+	return returnPromise(result, "No results returned");
 };
 
 module.exports.getCategories = function () {
-	return returnPromise(categories, "no result returned");
+	return returnPromise(categories, "No results returned");
 };
 
 module.exports.addPost = (postData) => {
@@ -53,7 +53,7 @@ module.exports.addPost = (postData) => {
 
 module.exports.getPostsByCategory = (category) => {
 	var result = posts.filter((obj) => obj.category === category);
-	return returnPromise(result, "no result returned");
+	return returnPromise(result, "No results returned");
 };
 
 module.exports.getPostsByMinDate = (minDateStr) => {
@@ -66,12 +66,12 @@ module.exports.getPostsByMinDate = (minDateStr) => {
 			? true
 			: false;
 	});
-	return returnPromise(result, "no result returned");
+	return returnPromise(result, "No results returned");
 };
 
 module.exports.getPostById = (id) => {
 	var result = posts.filter((obj) => obj.id === id);
-	return returnPromise(result, "no result returned");
+	return returnPromise(result, "No results returned");
 };
 
 function returnPromise(result, msg) {

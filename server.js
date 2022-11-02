@@ -100,28 +100,28 @@ app.get("/posts", (req, res) => {
 	if (!category && !minDate) {
 		blog_service
 			.getAllPosts()
-			.then((data) => res.send(data))
+			.then((data) => res.render("posts", { data: data }))
 			.catch((err) => {
 				error.message = err;
-				res.json(error);
+				res.render("posts", error);
 			});
 	} else if (Number.isInteger(category)) {
 		blog_service
 			.getPostsByCategory(category)
 			.then((data) => {
-				res.json(data);
+				res.render("posts", { data: data });
 			})
 			.catch((err) => {
 				error.message = err;
-				res.json(error);
+				res.render("posts", error);
 			});
 	} else if (minDate) {
 		blog_service
 			.getPostsByMinDate(minDate)
-			.then((data) => res.json(data))
+			.then((data) => res.render("posts", { data: data }))
 			.catch((err) => {
 				error.message = err;
-				res.json(error);
+				res.render("posts", error);
 			});
 	}
 });
