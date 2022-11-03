@@ -42,6 +42,13 @@ module.exports.addPost = (postData) => {
 			postData.published = true;
 		}
 		postData.id = posts.length + 1;
+		var currentDate = new Date();
+		postData.postDate =
+			currentDate.getFullYear() +
+			"-" +
+			(currentDate.getMonth() + 1) +
+			"-" +
+			currentDate.getDate();
 		posts.push(postData);
 		if (postData) {
 			resolve(postData);

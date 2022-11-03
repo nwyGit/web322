@@ -79,7 +79,7 @@ app.use(function (req, res, next) {
 
 // routes
 app.get("/", (req, res) => {
-	res.redirect("/about");
+	res.redirect("/blog");
 });
 
 app.get("/about", (req, res) => {
@@ -240,7 +240,6 @@ app.post("/posts/add", upload.single("featureImage"), (req, res) => {
 						reject(error);
 					}
 				});
-
 				streamifier.createReadStream(req.file.buffer).pipe(stream);
 			});
 		};
@@ -279,7 +278,8 @@ app.get("/posts/:id", (req, res) => {
 });
 //exception routes
 app.use((req, res) => {
-	res.status(404).send("Page Not Found");
+	res.status(404);
+	res.render("404");
 });
 //blog logic
 blog_service
