@@ -74,6 +74,13 @@ module.exports.getPostById = (id) => {
 	return returnPromise(result, "No results returned");
 };
 
+module.exports.getPublishedPostsByCategory = (category) => {
+	var result = posts.filter(
+		(obj) => obj.published === true && posts.category === category
+	);
+	return returnPromise(result, "No results returned");
+};
+
 function returnPromise(result, msg) {
 	return new Promise((resolve, reject) => {
 		if (result.length > 0) {
