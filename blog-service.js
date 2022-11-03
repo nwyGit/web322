@@ -70,8 +70,8 @@ module.exports.getPostsByMinDate = (minDateStr) => {
 };
 
 module.exports.getPostById = (id) => {
-	var result = posts.filter((obj) => obj.id === id);
-	return returnPromise(result, "No results returned");
+	var result = posts.filter((obj) => obj.id === Number(id));
+	return result.length > 0 ? result[0] : "No results returned";
 };
 
 module.exports.getPublishedPostsByCategory = (category) => {
