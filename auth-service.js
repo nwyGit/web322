@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 const Schema = mongoose.Schema;
 var userSchema = new Schema({
 	userName: { type: String, unique: true },
@@ -28,6 +29,12 @@ module.exports.registerUser = (userData) => {
 		if (userData.password !== userData.password2)
 			reject("Passwords do not match");
 		else {
+			bcrypt
+				.hash(userData.password, 10)
+				.then((hash) => (userData.password = hash))
+				.catch((err) => {
+					reject(`There was an error encrypting the password: ${err}`);
+				});
 			let newUser = new User(userData);
 			newUser
 				.save()
@@ -48,23 +55,27 @@ module.exports.checkUser = (userData) => {
 			.exec()
 			.then((users) => {
 				if (!users) reject("Unable to find user: " + userData.userName);
-				else if (users[0].password !== userData.password)
-					reject("Incorrect Password for user:" + userData.userName);
-				else if (users[0].password === userData.password) {
-					users[0].loginHistory.push({
-						dateTime: new Date().toString(),
-						userAgent: userData.userAgent,
-					});
-					User.updateOne(
-						{ userName: users[0].userName },
-						{ $set: { loginHistory: users[0].loginHistory } }
-					)
-						.exec()
-						.then(() => {
-							resolve(users[0]);
-						})
-						.catch((err) => {
-							reject(`There was an error verifying the user: ${err}`);
+				else {
+					bcrypt
+						.compare(userData.password, users[0].password)
+						.then((result) => {
+							if (result) {
+								users[0].loginHistory.push({
+									dateTime: new Date().toString(),
+									userAgent: userData.userAgent,
+								});
+								User.updateOne(
+									{ userName: users[0].userName },
+									{ $set: { loginHistory: users[0].loginHistory } }
+								)
+									.exec()
+									.then(() => {
+										resolve(users[0]);
+									})
+									.catch((err) => {
+										reject(`There was an error verifying the user: ${err}`);
+									});
+							} else reject("Incorrect Password for user:" + userData.userName);
 						});
 				}
 			})
