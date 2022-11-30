@@ -18,6 +18,7 @@ const streamifier = require("streamifier");
 const upload = multer(); // no {storage:storage} since we are not using disk storage
 const exphbs = require("express-handlebars");
 const stripJs = require("strip-js");
+const authData = require("auth-service");
 // handling .hbs extension file
 app.engine(
 	".hbs",
