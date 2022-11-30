@@ -18,7 +18,8 @@ const streamifier = require("streamifier");
 const upload = multer(); // no {storage:storage} since we are not using disk storage
 const exphbs = require("express-handlebars");
 const stripJs = require("strip-js");
-const authData = require("auth-service");
+const authData = require("./auth-service");
+const clientSessions = require("client-sessions");
 // handling .hbs extension file
 app.engine(
 	".hbs",
@@ -72,6 +73,18 @@ function onHttpStart() {
 }
 // middleware
 app.use(express.static("public"));
+app.use(
+	clientSessions({
+		cookieName: "session",
+		secret: "a6_web322",
+		duration: 2 * 60 * 1000,
+		activeDuration: 1000 * 60,
+	})
+);
+app.use(function (req, res, next) {
+	res.locals.session = req.session;
+	next();
+});
 app.use(express.urlencoded({ extended: true }));
 
 app.use(function (req, res, next) {
@@ -84,6 +97,15 @@ app.use(function (req, res, next) {
 	app.locals.viewingCategory = req.query.category;
 	next();
 });
+
+// login helper function
+function ensureLogin(req, res, next) {
+	if (!req.session.user) {
+		res.redirect("/login");
+	} else {
+		next();
+	}
+}
 
 // routes
 // main routes
@@ -141,7 +163,7 @@ app.get("/blog", async (req, res) => {
 	res.render("blog", { data: viewData });
 });
 
-app.get("/posts", (req, res) => {
+app.get("/posts", ensureLogin, (req, res) => {
 	var error = { message: "" };
 	var category = Number(req.query.category);
 	var minDate = req.query.minDate;
@@ -190,7 +212,7 @@ app.get("/posts", (req, res) => {
 	}
 });
 
-app.get("/categories", (req, res) => {
+app.get("/categories", ensureLogin, (req, res) => {
 	var error = { message: "" };
 	blog_service
 		.getCategories()
@@ -208,11 +230,11 @@ app.get("/categories", (req, res) => {
 });
 
 // manipulation routes
-app.get("/categories/add", (req, res) => {
+app.get("/categories/add", ensureLogin, (req, res) => {
 	res.render("addCategory");
 });
 
-app.post("/categories/add", (req, res) => {
+app.post("/categories/add", ensureLogin, (req, res) => {
 	blog_service
 		.addCategory(req.body)
 		.then(() => {
@@ -221,7 +243,7 @@ app.post("/categories/add", (req, res) => {
 		.catch((err) => res.send(err));
 });
 
-app.get("/categories/delete/:id", (req, res) => {
+app.get("/categories/delete/:id", ensureLogin, (req, res) => {
 	blog_service
 		.deleteCategoryById(req.params.id)
 		.then(() => {
@@ -233,7 +255,7 @@ app.get("/categories/delete/:id", (req, res) => {
 		});
 });
 
-app.get("/posts/add", (req, res) => {
+app.get("/posts/add", ensureLogin, (req, res) => {
 	blog_service
 		.getCategories()
 		.then((data) => {
@@ -244,43 +266,49 @@ app.get("/posts/add", (req, res) => {
 		});
 });
 
-app.post("/posts/add", upload.single("featureImage"), (req, res) => {
-	if (req.file) {
-		let streamUpload = (req) => {
-			return new Promise((resolve, reject) => {
-				let stream = cloudinary.uploader.upload_stream((error, result) => {
-					if (result) {
-						resolve(result);
-					} else {
-						reject(error);
-					}
+app.post(
+	"/posts/add",
+	ensureLogin,
+	upload.single("featureImage"),
+	(req, res) => {
+		if (req.file) {
+			let streamUpload = (req) => {
+				return new Promise((resolve, reject) => {
+					let stream = cloudinary.uploader.upload_stream((error, result) => {
+						if (result) {
+							resolve(result);
+						} else {
+							reject(error);
+						}
+					});
+					streamifier.createReadStream(req.file.buffer).pipe(stream);
 				});
-				streamifier.createReadStream(req.file.buffer).pipe(stream);
-			});
-		};
+			};
 
-		async function upload(req) {
-			let result = await streamUpload(req);
-			console.log(result);
-			return result;
+			async function upload(req) {
+				let result = await streamUpload(req);
+				console.log(result);
+				return result;
+			}
+
+			upload(req).then((uploaded) => {
+				req.body.featureImage = uploaded.url;
+			});
+		} else {
+			req.body.featureImage =
+				"https://dummyimage.com/847x320/d9d9d9/545454.jpg";
 		}
 
-		upload(req).then((uploaded) => {
-			req.body.featureImage = uploaded.url;
-		});
-	} else {
-		req.body.featureImage = "https://dummyimage.com/847x320/d9d9d9/545454.jpg";
+		blog_service
+			.addPost(req.body)
+			.then(() => {
+				res.redirect("/posts");
+			})
+			.catch((err) => res.send(err));
 	}
+);
 
-	blog_service
-		.addPost(req.body)
-		.then(() => {
-			res.redirect("/posts");
-		})
-		.catch((err) => res.send(err));
-});
-
-app.get("/posts/delete/:id", (req, res) => {
+app.get("/posts/delete/:id", ensureLogin, (req, res) => {
 	blog_service
 		.deletePostById(req.params.id)
 		.then(() => {
@@ -342,7 +370,7 @@ app.get("/blog/:id", async (req, res) => {
 	res.render("blog", { data: viewData });
 });
 
-app.get("/posts/:id", (req, res) => {
+app.get("/posts/:id", ensureLogin, (req, res) => {
 	var error = { message: "" };
 	var id = Number(req.params.id);
 	blog_service
@@ -354,6 +382,55 @@ app.get("/posts/:id", (req, res) => {
 		});
 });
 
+//login routes
+app.get("/login", (req, res) => {
+	res.render("login");
+});
+
+app.get("/register", (req, res) => {
+	res.render("register");
+});
+
+app.post("/register", (req, res) => {
+	authData
+		.registerUser(req.body)
+		.then(() => {
+			res.render("register", { successMessage: "User created" });
+		})
+		.catch((err) => {
+			res.render("register", {
+				errorMessage: err,
+				userName: req.body.userName,
+			});
+		});
+});
+
+app.post("/login", (req, res) => {
+	req.body.userAgent = req.get("User-Agent");
+	authData
+		.checkUser(req.body)
+		.then((user) => {
+			req.session.user = {
+				userName: user.userName, // authenticated user's userName
+				email: user.email, // authenticated user's email
+				loginHistory: user.loginHistory, // authenticated user's loginHistory
+			};
+			res.redirect("/post");
+		})
+		.catch((err) => {
+			res.render("login", { errorMessage: err, userName: req.body.userName });
+		});
+});
+
+app.get("/logout", (req, res) => {
+	res.session.reset();
+	res.redirect("/");
+});
+
+app.get("/userHistory", ensureLogin, (req, res) => {
+	res.render("userHistory");
+});
+
 // exception routes
 app.use((req, res) => {
 	res.status(404);
@@ -362,5 +439,6 @@ app.use((req, res) => {
 // blog logic
 blog_service
 	.initialize()
+	.then(authData.initialize)
 	.then(() => app.listen(HTTP_PORT, onHttpStart))
 	.catch((err) => console.log(err));
