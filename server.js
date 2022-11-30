@@ -415,7 +415,7 @@ app.post("/login", (req, res) => {
 				email: user.email, // authenticated user's email
 				loginHistory: user.loginHistory, // authenticated user's loginHistory
 			};
-			res.redirect("/post");
+			res.redirect("/posts");
 		})
 		.catch((err) => {
 			res.render("login", { errorMessage: err, userName: req.body.userName });
@@ -423,7 +423,7 @@ app.post("/login", (req, res) => {
 });
 
 app.get("/logout", (req, res) => {
-	res.session.reset();
+	req.session.reset();
 	res.redirect("/");
 });
 

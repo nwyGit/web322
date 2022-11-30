@@ -31,19 +31,25 @@ module.exports.registerUser = (userData) => {
 		else {
 			bcrypt
 				.hash(userData.password, 10)
-				.then((hash) => (userData.password = hash))
-				.catch((err) => {
-					reject(`There was an error encrypting the password: ${err}`);
-				});
-			let newUser = new User(userData);
-			newUser
-				.save()
-				.then(() => {
-					resolve();
+				.then((hash) => {
+					let newUser = new User({
+						userName: userData.userName,
+						password: hash,
+						email: userData.email,
+						loginHistory: userData.loginHistory,
+					});
+					newUser
+						.save()
+						.then(() => {
+							resolve();
+						})
+						.catch((err) => {
+							if (err.code === 11000) reject("User Name already taken");
+							else reject(`There was an error creating the user: ${err}`);
+						});
 				})
 				.catch((err) => {
-					if (err.code === 11000) reject("User Name already taken");
-					else reject(`There was an error creating the user: ${err}`);
+					reject(`There was an error encrypting the password: ${err}`);
 				});
 		}
 	});
